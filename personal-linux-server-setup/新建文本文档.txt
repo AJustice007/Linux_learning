@@ -1,0 +1,4 @@
+#crontab -e			设置用户定时任务
+
+
+#0 2 * * * /home/user1/backup/backup.sh			每天2：00定时执行，分别对应分，时，日，周，月
