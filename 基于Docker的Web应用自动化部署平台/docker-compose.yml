@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: user1
+      MYSQL_PASSWORD: pass123
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+  web:
+    build:
+      context: ./web
+    container_name: flask-app
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - DB_HOST=db
+      - DB_USER=user1
+      - DB_PASSWORD=pass123
+      - DB_NAME=testdb
+    volumes:
+      - ./web:/app
+      - ./logs/web:/var/log/app
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx-proxy
+    restart: always
+    depends_on:
+      - web
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
